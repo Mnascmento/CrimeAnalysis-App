@@ -94,6 +94,9 @@ def deletar_caso(data_do_caso):
         abort(404, description="Caso não encontrado.")
     return jsonify({"message": "Caso deletado com sucesso!"}), 200
 
+
+
+
 if __name__ == '__main__':
     if colecao.count_documents({}) == 0:
         print("Inserindo dados aleatórios no MongoDB...")
