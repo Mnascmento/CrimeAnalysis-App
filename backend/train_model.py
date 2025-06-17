@@ -14,11 +14,14 @@ colecao = db['dados']
 
 dados = list(colecao.find({}, {'_id': 0}))
 
+print(df.columns)
+print(df.head())
+
 lista = []
 for d in dados:
     lista.append({
         "idade": d['Vitima']['idade'],
-        "etnia": d['Vitima']['corEtnia'],
+        "corEtnia": d['Vitima']['corEtnia'],
         "localizacao": d['geolocalizacao'],
         "tipo_de_caso": d['titulo'],
     })

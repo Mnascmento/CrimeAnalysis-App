@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
-from pymongo import ObjectId
+from bson import ObjectId
 from dataclasses import dataclass, asdict
 import random
 from datetime import datetime, timedelta
