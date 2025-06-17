@@ -1,10 +1,22 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
+from pymongo import ObjectId
 from dataclasses import dataclass, asdict
 import random
 from datetime import datetime, timedelta
 from flask import request, abort
+import pickle
+import pandas as pd
+from dataclasses import dataclass, asdict
+from datetime import datetime
+from enum import Enum
+from typing import List, Optional, Union
+
+
+class Status(Enum):
+    EM_ANDAMENTO = 1
+    CONCLUIDO = 2
 
 app = Flask(__name__)
 CORS(app)
@@ -17,22 +29,35 @@ colecao = db['dados']
 
 @dataclass
 class Vitima:
-    etnia: str
-    idade: int
+    nic: str
+    nome: str = None
+    genero: str = None
+    idade: int = None
+    documento: str = None
+    endereco: str = None
+    corEtnia: str = None
+    odontograma: List[ObjectId] = None
 
 @dataclass
 class Caso:
-    data_do_caso: str
-    tipo_de_caso: str
-    localizacao: str
-    Vitima: Vitima
+    titulo: str
+    descricao: str
+    vitimas: List[str]
+    status: Status = Status.EM_ANDAMENTO
+    dataAbertura: datetime = datetime.now()
+    dataFechamento: Optional[datetime] = None
+    geolocalizacao: Optional[dict[str, Union[str, float]]] = None
+    evidencias: List[str] = None
+    relatorio: Optional[str] = None
 
     def to_dict(self):
         return {
-            "data_do_caso": self.data_do_caso,
-            "tipo_de_caso": self.tipo_de_caso,
-            "localizacao": self.localizacao,
-            "Vitima": asdict(self.Vitima)
+            "titulo": self.titulo,
+            "vitimas": [asdict(vitima) if isinstance(vitima, Vitima) else vitima for vitima in self.vitimas],
+            "status": self.status.name,
+            "dataAbertura": self.dataAbertura.isoformat(),
+            "dataFechamento": self.dataFechamento.isoformat() if self.dataFechamento else None,
+            "geolocalizacao": self.geolocalizacao,
         }
 
 def gerar_dados_aleatorio(n:100):
@@ -94,6 +119,81 @@ def deletar_caso(data_do_caso):
         abort(404, description="Caso não encontrado.")
     return jsonify({"message": "Caso deletado com sucesso!"}), 200
 
+with open('model.pkl', 'rb') as model_file:
+    data = pickle.load(model_file)
+    model = data['pipeline']
+    label_encoder = data['label_encoder']
+
+@app.route('/api/associacoes', methods=['GET'])
+def associacoes():
+    documentos = list(colecao.find({}, {"_id": 0}))
+    if not documentos:
+        return jsonify({"message": "Sem dados na coleção"}), 400
+
+    lista = []
+    for d in documentos:
+        vitima = d.get("vitima", {})
+        lista.append({
+            "idade": vitima.get("idade"),
+            "etnia": vitima.get("etnia"),
+            "localizacao": d.get("localizacao"),
+            "tipo_do_caso": d.get("tipo_do_caso")
+        })
+
+    df = pd.DataFrame(lista).dropna()
+    try:
+        X = df[["idade", "etnia", "localizacao"]]
+        # Placeholder para análise futura
+        return jsonify({"message": "Endpoint pronto para implementar análise"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Erro ao processar modelo: {str(e)}"}), 500
+
+@app.route('/api/predizer', methods=['POST'])
+def predizer():
+    dados = request.get_json()
+    if not dados or not all(k in dados for k in ("idade", "etnia", "localizacao")):
+        return jsonify({"erro": "JSON inválido. Esperado: idade, etnia, localizacao"}), 400
+
+    try:
+        df = pd.DataFrame([dados])
+        y_prob = modelo.predict_proba(df)[0]
+        y_pred_encoded = modelo.predict(df)[0]
+        y_pred = label_encoder.inverse_transform([y_pred_encoded])[0]
+        classes = label_encoder.classes_
+
+        resultado = {
+            "classe_predita": y_pred,
+            "probabilidades": {classe: round(prob, 4) for classe, prob in zip(classes, y_prob)}
+        }
+        return jsonify(resultado), 200
+    except Exception as e:
+        return jsonify({"erro": f"Erro ao fazer predição: {str(e)}"}), 500
+
+# Atualizando app.py
+@app.route('/api/modelo/coficientes', methods=['GET'])
+def coeficientes_modelo():
+    try:
+        # Pegando o pré-processador e o classificador XGBoost do pipeline
+        preprocessor = modelo.named_steps['preprocessor']
+        classifier = modelo.named_steps['classifier']
+
+        # Pegando nomes das features após o OneHotEncoding
+        cat_encoder = preprocessor.named_transformers_['cat']
+        cat_features = cat_encoder.get_feature_names_out(preprocessor.transformers_[0][2])
+        numeric_features = preprocessor.transformers_[1][2]
+        all_features = list(cat_features) + list(numeric_features)
+
+        # Pegando as importâncias de feature do XGBoost
+        importancias = classifier.feature_importances_
+
+        features_importances = {
+            feature: float(importance)
+            for feature, importance in zip(all_features, importancias)
+        }
+
+        return jsonify(features_importances), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 

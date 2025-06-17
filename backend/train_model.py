@@ -18,15 +18,15 @@ lista = []
 for d in dados:
     lista.append({
         "idade": d['Vitima']['idade'],
-        "etnia": d['Vitima']['etnia'],
-        "localizacao": d['localizacao'],
-        "tipo_de_caso": d['tipo_de_caso'],
+        "etnia": d['Vitima']['corEtnia'],
+        "localizacao": d['geolocalizacao'],
+        "tipo_de_caso": d['titulo'],
     })
 
 df = pd.DataFrame(lista)
 
-x = df[['idade', 'etnia', 'localizacao']]
-y = df['tipo_de_caso']
+x = df[['idade', 'corEtnia', 'localizacao']]
+y = df['titulo']
 
 label_encoder = LabelEncoder()
 y_encoded = label_encoder.fit_transform(y)
