@@ -156,8 +156,8 @@ def predizer():
 
     try:
         df = pd.DataFrame([dados])
-        y_prob = modelo.predict_proba(df)[0]
-        y_pred_encoded = modelo.predict(df)[0]
+        y_prob = model.predict_proba(df)[0]
+        y_pred_encoded = model.predict(df)[0]
         y_pred = label_encoder.inverse_transform([y_pred_encoded])[0]
         classes = label_encoder.classes_
 
@@ -174,8 +174,8 @@ def predizer():
 def coeficientes_modelo():
     try:
         # Pegando o pré-processador e o classificador XGBoost do pipeline
-        preprocessor = modelo.named_steps['preprocessor']
-        classifier = modelo.named_steps['classifier']
+        preprocessor = model.named_steps['preprocessor']
+        classifier = model.named_steps['classifier']
 
         # Pegando nomes das features após o OneHotEncoding
         cat_encoder = preprocessor.named_transformers_['cat']
