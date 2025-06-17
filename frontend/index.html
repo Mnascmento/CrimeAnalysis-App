@@ -74,8 +74,15 @@
   </div>
 
   <div class="container">
-    <div class="grafico-box">
-      <h2>Gráfico de Casos</h2>
+    <div class="grafico-box rosca">
+      <div class="rosca-controls">
+        <label for="variavelRosca">Variável:</label>
+        <select id="variavelRosca">
+          <option value="titulo">Título</option>
+          <option value="geolocalizacao">Localização</option>
+          <option value="vitima.corEtnia">Etnia</option>
+        </select>
+      </div>
       <div id="graficoRosca"></div>
     </div>
 
@@ -88,7 +95,7 @@
    <div id="containergraficoModelo">
     <h3>Fatores determinantes no tipo de gráfico</h3>
    </div>
-   
+
   <script src="script.js"></script>
 </body>
 </html>

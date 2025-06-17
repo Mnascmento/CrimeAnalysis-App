@@ -1,3 +1,11 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const fim = new Date();
+    const inicio = new Date();
+    inicio.setDate(inicio.getDate() - 30); 
+    document.getElementById('dataFim').valueAsDate = fim;
+    document.getElementById('dataInicio').valueAsDate = inicio;
+});
+
 let dadosCasos = [];
 let graficoRosca = null;
 let graficoDistribuicao = null;
@@ -93,7 +101,7 @@ async function inicializarGraficoModelo() {
   }
 
 function atualizarGraficoRosca(dadosFiltrados) {
-  const contagem = contarOcorrencias(dadosFiltrados, "tipo_do_caso");
+  const contagem = contarOcorrencias(dadosFiltrados, variavel = "titulo");
   const labels = Object.keys(contagem);
   const valores = Object.values(contagem);
   const cores = gradiente.slice(0, labels.length);
@@ -173,15 +181,19 @@ if (graficoDistribuicao) graficoDistribuicao.destroy();
 function atualizarGraficos() {
     const dadosFiltrados = filtrarPorData(dadosCasos);
     console.log("Dados filtrados:", dadosFiltrados);
+    const variavel = document.getElementById('variavelRosca').value;
+    
     if (dadosFiltrados.length === 0) {
         alert("Nenhum caso encontrado para o período selecionado.");
         return;
     }
-    atualizarGraficoRosca(dadosFiltrados);
+    atualizarGraficoRosca(dadosFiltrados, variavel);
     atualizarGraficoDistribuicao(dadosFiltrados);
 }
 
 document.getElementById('dataFim').addEventListener('change', atualizarGraficos);
 document.getElementById('dataInicio').addEventListener('change', atualizarGraficos);
+document.getElementById('variavelRosca').addEventListener('change', atualizarGraficos);
+
 
 carregarDados();
