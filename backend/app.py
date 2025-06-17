@@ -67,6 +67,32 @@ def validar_caso_json(data):
         return False
     return True
 
+@app.route('/api/casos', methods=['GET'])
+def listar_casos():
+    documentos = list(colecao.find({}, {'_id': 0}))
+    return jsonify(documentos), 200
+
+@app.route('/api/casos', methods=['POST'])
+def criar_caso():
+    data = request.get_json()
+    if not data or not validar_caso_json(data):
+        abort(400, description="Dados inválidos ou faltando campos obrigatórios.")
+    colecao.insert_one(data)
+    return jsonify({"message": "Caso criado com sucesso!"}), 201
+
+@app.route('/api/casos/<string:tipo_de_caso>', methods=['GET'])
+def buscar_caso(data_do_caso):
+    caso = colecao.find_one({"data_do_caso": data_do_caso}, {'_id': 0})
+    if not caso:
+        abort(404, description="Caso não encontrado.")
+    return jsonify(caso), 200
+
+@app.route('/api/casos/<string:tipo_de_caso>', methods=['DELETE'])
+def deletar_caso(data_do_caso):
+    resultado = colecao.delete_one({"data_do_caso": data_do_caso})
+    if resultado.deleted_count == 0:
+        abort(404, description="Caso não encontrado.")
+    return jsonify({"message": "Caso deletado com sucesso!"}), 200
 
 if __name__ == '__main__':
     if colecao.count_documents({}) == 0:
