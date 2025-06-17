@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from dataclasses import dataclass, asdict
 import random
 from datetime import datetime, timedelta
+from flask import request, abort
 
 app = Flask(__name__)
 CORS(app)
@@ -53,6 +54,19 @@ def gerar_dados_aleatorio(n:100):
         )
         casos.append(caso.to_dict())
     return casos
+
+def validar_caso_json(data):
+    try:
+        vitima = data['Vitima']
+        assert isinstance(vitima, dict)
+        assert all (k in vitima for k in ['etnia', 'idade'])
+        datetime.fromisoformat(data['data_do_caso'])
+        assert isinstance(data['tipo_de_caso'], str)
+        assert isinstance(data['localizacao'], str)
+    except:
+        return False
+    return True
+
 
 if __name__ == '__main__':
     if colecao.count_documents({}) == 0:
